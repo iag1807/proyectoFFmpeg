@@ -1,0 +1,171 @@
+* {
+  box-sizing: border-box;
+  font-family: "Segoe UI", sans-serif;
+}
+
+body {
+  background: #e4e4e4;
+  margin: 0;
+  color: #e2e8f0;
+}
+
+.app-container {
+  max-width: 1800px;
+  margin: 40px auto;
+  padding: 24px;
+  background: #fafafa;
+  border-radius: 12px;
+}
+
+h1 {
+  margin-bottom: 0;
+  color: #000;
+}
+
+h3{
+    color: #000;
+}
+
+.subtitulo {
+  color: #94a3b8;
+  margin-top: 4px;
+  margin-bottom: 24px;
+}
+
+.formulario-stream {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.formulario-stream label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+  color: #000;
+}
+
+.formulario-stream input,
+.formulario-stream select {
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #e4e4e4;
+  background: #fafafa;
+  color: #000;
+}
+
+.fila-doble {
+  display: flex;
+  gap: 12px;
+}
+
+.fila-doble label {
+  flex: 1;
+  color: #000;
+}
+
+.botones {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.botones button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.botones button[type="submit"] {
+  background: #22c55e;
+  color: #052e16;
+}
+
+.botones button[type="button"] {
+  background: #ef4444;
+  color: #450a0a;
+}
+
+.botones button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.estado-stream {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 20px 0 10px;
+  font-weight: bold;
+}
+
+span{
+    color:#000;
+}
+
+.punto {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.punto.verde {
+  background: #22c55e;
+}
+
+.punto.gris {
+  background: #64748b;
+}
+
+.caja-logs {
+  background: #e4e4e4;
+  border-radius: 8px;
+  padding: 16px;
+  height: 100%;
+}
+
+.contenido-logs {
+  max-height: 600px;
+  overflow-y: auto;
+  font-family: monospace;
+  font-size: 13px;
+  color: #000;
+}
+
+.linea-log {
+  white-space: pre-wrap;
+  margin-bottom: 2px;
+}
+
+.vacio {
+  color: #64748b;
+  font-style: italic;
+}
+
+.layout-dos-columnas {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 24px;
+  align-items: start;
+  margin-top: 20px;
+}
+
+.columna-formulario {
+  background: #e4e4e4;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.columna-logs {
+  background: transparent;
+}
+
+@media (max-width: 800px) {
+  .layout-dos-columnas {
+    grid-template-columns: 1fr;
+  }
+}
