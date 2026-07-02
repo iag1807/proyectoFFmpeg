@@ -63,7 +63,7 @@ export default function App() {
 
   return (
   <div className="app-container">
-    <h1>🎬 Streaming a UDP Multicast</h1>
+    
     <p className="subtitulo">Convierte cualquier protocolo de streaming a UDP Multicast</p>
 
     <div className="layout-dos-columnas">

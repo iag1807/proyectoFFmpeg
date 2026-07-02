@@ -1,19 +1,39 @@
+/**
+ * routes/stream.js
+ * ----------------
+ * Define los endpoints que el frontend va a usar:
+ *   POST /api/stream/iniciar   -> empieza una transmisión
+ *   POST /api/stream/detener   -> detiene una transmisión
+ *   GET  /api/stream/activos   -> lista los streams corriendo
+ */
+
 const express = require("express");
 const router = express.Router();
 const ffmpegService = require("../services/ffmpeg");
 
+// "io" se inyecta desde server.js para poder mandar logs en tiempo real
 module.exports = function (io) {
+  // Iniciar una transmisión
   router.post("/iniciar", (req, res) => {
-    const { id, protocolo, urlEntrada, ipMulticast, puerto } = req.body;
+    // req.body trae TODOS los campos del formulario avanzado:
+    // id, nombreCanal, protocolo, urlEntrada, modoSrt, latencia, ttlUdp,
+    // encriptacion, tipoAes, fraseSecreta, tipoSalida, ipMulticast,
+    // puertoSalida, codecVideo, bitrateVideo, resolucion, fps,
+    // codecAudio, bitrateAudio, seleccionarAudio
+    const datos = req.body;
+    const { id, protocolo, urlEntrada, ipMulticast, puertoSalida, tipoSalida } = datos;
 
-    if (!id || !protocolo || !urlEntrada || !ipMulticast || !puerto) {
+    // Solo validamos los campos minimos indispensables
+    if (!id || !protocolo || !urlEntrada || !ipMulticast || (tipoSalida !== "HLS" && !puertoSalida)) {
       return res.status(400).json({ error: "Faltan datos requeridos" });
     }
 
     try {
       ffmpegService.iniciarStream(
-        { id, protocolo, urlEntrada, ipMulticast, puerto },
+        datos,
         (mensaje) => {
+          // Cada vez que ffmpeg manda una línea de log,
+          // se la enviamos al navegador en tiempo real por socket.io
           io.emit("log", { id, mensaje });
         },
         (codigoSalida) => {
@@ -28,6 +48,7 @@ module.exports = function (io) {
     }
   });
 
+  // Detener una transmisión
   router.post("/detener", (req, res) => {
     const { id } = req.body;
     const detenido = ffmpegService.detenerStream(id);
@@ -40,6 +61,7 @@ module.exports = function (io) {
     }
   });
 
+  // Listar transmisiones activas
   router.get("/activos", (req, res) => {
     res.json({ activos: ffmpegService.listarStreamsActivos() });
   });
