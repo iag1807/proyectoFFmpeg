@@ -12,14 +12,6 @@ import { useState } from "react";
 const PROTOCOLOS_ENTRADA = ["UDP", "SRT", "FILE", "RTMP", "RTSP", "HTTP"];
 const PROTOCOLOS_SALIDA = ["UDP", "SRT", "HLS"];
 
-const PLACEHOLDERS = {
-  UDP: "udp://127.0.0.1:5000",
-  SRT: "srt://servidor:puerto",
-  FILE: "C:\\ruta\\al\\video.mp4",
-  RTMP: "rtmp://servidor/live/stream",
-  RTSP: "rtsp://servidor/stream",
-  HTTP: "http://servidor/stream.m3u8",
-};
 
 export default function FormStream({ onIniciar, onDetener, transmitiendo }) {
   // ---- Datos generales ----
@@ -39,8 +31,8 @@ export default function FormStream({ onIniciar, onDetener, transmitiendo }) {
 
   // ---- Salida ----
   const [tipoSalida, setTipoSalida] = useState("UDP");
-  const [ipMulticast, setIpMulticast] = useState("239.0.0.1");
-  const [puertoSalida, setPuertoSalida] = useState("1234");
+  const [ipMulticast, setIpMulticast] = useState("");
+  const [puertoSalida, setPuertoSalida] = useState("");
 
   // ---- Salida avanzada (opcional, puede dejarse vacío = copiar tal cual) ----
   const [codecVideo, setCodecVideo] = useState("copy");
