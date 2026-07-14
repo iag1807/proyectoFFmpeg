@@ -10,6 +10,7 @@
 const express = require("express");
 const router = express.Router();
 const ffmpegService = require("../services/ffmpeg");
+const { parsearLineaProgreso, parsearInfoStream } = require("../services/parserEstadisticas");
 
 // "io" se inyecta desde server.js para poder mandar logs en tiempo real
 module.exports = function (io) {
@@ -35,6 +36,20 @@ module.exports = function (io) {
           // Cada vez que ffmpeg manda una línea de log,
           // se la enviamos al navegador en tiempo real por socket.io
           io.emit("log", { id, mensaje });
+
+          // Además, intentamos extraer datos estructurados de esa línea
+          // (frame, fps, bitrate, speed...) para mostrarlos en tarjetas
+          const stats = parsearLineaProgreso(mensaje);
+          if (stats) {
+            io.emit("stats", { id, stats });
+          }
+
+          // También detectamos info del stream (codec de video/audio,
+          // resolución) que aparece al inicio de la conexión
+          const infoStream = parsearInfoStream(mensaje);
+          if (infoStream) {
+            io.emit("infoStream", { id, infoStream });
+          }
         },
         (codigoSalida) => {
           io.emit("estado", { id, estado: "detenido", codigoSalida });

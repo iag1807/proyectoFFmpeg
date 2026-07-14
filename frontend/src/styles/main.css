@@ -1,3 +1,5 @@
+/* styles/main.css */
+
 * {
   box-sizing: border-box;
   font-family: "Segoe UI", sans-serif;
@@ -17,13 +19,8 @@ body {
   border-radius: 12px;
 }
 
-h1 {
-  margin-bottom: 0;
-  color: #000;
-}
-
 h3{
-    color: #000;
+  color: #000;
 }
 
 .subtitulo {
@@ -104,7 +101,7 @@ h3{
 }
 
 span{
-    color:#000;
+  color:#000;
 }
 
 .punto {
@@ -124,15 +121,14 @@ span{
 .caja-logs {
   background: #e4e4e4;
   border-radius: 8px;
-  padding: 16px;
-  height: 100%;
+  padding: 12px;
 }
 
 .contenido-logs {
-  max-height: 600px;
+  max-height: 435px;
   overflow-y: auto;
   font-family: monospace;
-  font-size: 13px;
+  font-size: 12px;
   color: #000;
 }
 
@@ -146,6 +142,71 @@ span{
   font-style: italic;
 }
 
+/* --- Estilos para el formulario avanzado (Entrada/Salida) --- */
+
+.titulo-seccion {
+  margin: 18px 0 4px;
+  color: #000;
+  font-size: 15px;
+  border-bottom: 1px solid #000;
+  padding-bottom: 6px;
+}
+
+.titulo-seccion:first-of-type {
+  margin-top: 0;
+}
+
+.grupo-avanzado {
+  background: #fafafa;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-left: 3px solid #e4e4e4;
+}
+
+.fila-checkbox {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 8px !important;
+}
+
+.fila-checkbox input {
+  width: auto;
+}
+
+.avanzado-salida {
+  background: #fafafa;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-top: 4px;
+}
+
+.avanzado-salida summary {
+  cursor: pointer;
+  color: #000;
+  font-size: 13px;
+  padding: 4px 0;
+}
+
+.avanzado-salida[open] summary {
+  margin-bottom: 10px;
+  color: #000;
+}
+
+.avanzado-salida .fila-doble {
+  margin-bottom: 10px;
+}
+
+.formulario-stream input:disabled,
+.formulario-stream select:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* --- Layout de dos columnas: formulario izquierda, logs/stats derecha --- */
+
 .layout-dos-columnas {
   display: grid;
   grid-template-columns: 1fr 1.3fr;
@@ -158,6 +219,8 @@ span{
   background: #e4e4e4;
   padding: 20px;
   border-radius: 10px;
+  max-height: 85vh;
+  overflow-y: auto;
 }
 
 .columna-logs {
@@ -170,68 +233,93 @@ span{
   }
 }
 
-.titulo-seccion {
-  margin: 18px 0 4px;
-  color: #000;
-  font-size: 15px;
-  border-bottom: 2px solid #000;
-  padding-bottom: 6px;
+/* --- Panel de estadísticas dinámicas --- */
+
+.stats-panel-vacio {
+  background: #e4e4e4;
+  border-radius: 8px;
+  padding: 30px 20px;
+  text-align: center;
+  color: #64748b;
+  font-size: 13px;
+  margin-bottom: 16px;
 }
- 
-.titulo-seccion:first-of-type {
-  margin-top: 0;
+
+.stats-panel {
+  background: #e4e4e4;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
 }
- 
-.grupo-avanzado {
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.stat-card {
   background: #fafafa;
   border-radius: 8px;
   padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 4px;
+  border-left: 3px solid #000;
 }
- 
-.fila-checkbox {
-  flex-direction: row !important;
-  align-items: center;
-  gap: 8px !important;
+
+.stat-card.stat-alerta {
+  border-left-color: #ef4444;
 }
- 
-.fila-checkbox input {
-  width: auto;
-}
- 
-.avanzado-salida {
-  background: #fafafa;
-  border-radius: 8px;
-  padding: 10px 12px;
-  margin-top: 4px;
-}
- 
-.avanzado-salida summary {
-  cursor: pointer;
+
+.stat-label {
+  font-size: 11px;
   color: #000;
-  font-size: 13px;
-  padding: 4px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: bold;
 }
- 
-.avanzado-salida[open] summary {
-  margin-bottom: 10px;
+
+.stat-valor {
+  font-size: 16px;
   color: #000;
 }
- 
-.avanzado-salida .fila-doble {
-  margin-bottom: 10px;
+
+.stat-card.stat-alerta .stat-valor {
+  color: #fca5a5;
 }
- 
-.formulario-stream input:disabled,
-.formulario-stream select:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+
+.stats-info-canal {
+  display: flex;
+  gap: 16px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #334155;
 }
- 
-.columna-formulario {
-  max-height: 85vh;
-  overflow-y: auto;
+
+.info-canal-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  color: #cbd5e1;
 }
- 
+
+.info-canal-titulo {
+  font-weight: bold;
+  font-size: 15px;
+  color: #000;
+  margin-bottom: 2px;
+}
+
+.stats-alerta-texto {
+  color: #fca5a5;
+  font-size: 12px;
+  margin: 10px 0 0;
+}
+
+@media (max-width: 500px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

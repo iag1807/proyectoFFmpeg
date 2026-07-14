@@ -7,8 +7,22 @@
  */
 
 const { spawn } = require("child_process");
+const fs = require("fs");
+const path = require("path");
 
 const procesosActivos = {};
+
+// Carpeta donde se guardan los segmentos HLS de cada canal,
+// para que el navegador pueda pedirlos como archivos normales.
+const CARPETA_STREAMS = path.join(__dirname, "..", "streams");
+
+function asegurarCarpetaCanal(id) {
+  const carpeta = path.join(CARPETA_STREAMS, id);
+  if (!fs.existsSync(carpeta)) {
+    fs.mkdirSync(carpeta, { recursive: true });
+  }
+  return carpeta;
+}
 
 /**
  * Arma el string de entrada (-i) agregando los parámetros
@@ -30,8 +44,12 @@ function construirEntrada(datos) {
   // Para SRT armamos los query params: modo, latencia, encriptación
   if (protocolo === "SRT") {
     const params = [];
+    // Si no se especifico latencia, o es muy baja, usamos un minimo seguro
+    // de 2000ms para darle a SRT margen suficiente para recuperar paquetes
+    // perdidos antes de descartarlos (reduce las perdidas reportadas por VLC).
+    const latenciaSegura = latencia && Number(latencia) >= 2000 ? latencia : 2000;
     if (modoSrt) params.push(`mode=${modoSrt}`);
-    if (latencia) params.push(`latency=${latencia}`);
+    params.push(`latency=${latenciaSegura}`);
     if (encriptacion && fraseSecreta) {
       params.push(`passphrase=${encodeURIComponent(fraseSecreta)}`);
       params.push(`pbkeylen=${tipoAes || 32}`);
@@ -110,7 +128,9 @@ function construirSalida(datos) {
   }
 
   // UDP / Multicast (el caso más común en la empresa)
-  const params = ["pkt_size=1316"];
+  // buffer_size más grande = menos probabilidad de perder paquetes
+  // cuando el sistema esta bajo carga (varios procesos corriendo a la vez)
+  const params = ["pkt_size=1316", "buffer_size=655360"];
   if (ttlUdp) params.push(`ttl=${ttlUdp}`);
   return {
     formato: "mpegts",
@@ -123,7 +143,7 @@ function construirSalida(datos) {
  * parámetros configurados por el usuario en el formulario avanzado.
  */
 function iniciarStream(datos, onLog, onClose) {
-  const { id } = datos;
+  const { id, generarVistaPrevia } = datos;
 
   if (procesosActivos[id]) {
     throw new Error("Ya existe una transmisión activa con este id");
@@ -134,6 +154,7 @@ function iniciarStream(datos, onLog, onClose) {
   const paramsAudio = construirParametrosAudio(datos);
   const { formato, destino } = construirSalida(datos);
 
+  // Salida principal (la que ya teniamos: Multicast, SRT o HLS "real")
   const args = [
     "-i", entrada,
     ...paramsVideo,
@@ -141,6 +162,26 @@ function iniciarStream(datos, onLog, onClose) {
     "-f", formato,
     destino,
   ];
+
+  // Si el usuario activo la vista previa web, agregamos UNA SEGUNDA salida
+  // en el MISMO comando de ffmpeg: un HLS liviano guardado en disco,
+  // que el navegador podra reproducir con hls.js
+  if (generarVistaPrevia) {
+    const carpetaCanal = asegurarCarpetaCanal(id);
+    const rutaM3u8 = path.join(carpetaCanal, "index.m3u8");
+
+    args.push(
+      "-c:v", "libx264",
+      "-c:a", "aac",
+      "-f", "hls",
+      "-hls_time", "4",
+      "-hls_list_size", "5",
+      "-hls_flags", "delete_segments",
+      rutaM3u8
+    );
+
+    onLog(`Vista previa HLS habilitada en: /streams/${id}/index.m3u8`);
+  }
 
   onLog(`Comando ejecutado: ffmpeg ${args.join(" ")}`);
 
@@ -168,6 +209,13 @@ function detenerStream(id) {
   if (!proceso) return false;
   proceso.kill("SIGINT");
   delete procesosActivos[id];
+
+  // Limpiamos los archivos .ts y .m3u8 del canal, ya no se necesitan
+  const carpetaCanal = path.join(CARPETA_STREAMS, id);
+  if (fs.existsSync(carpetaCanal)) {
+    fs.rmSync(carpetaCanal, { recursive: true, force: true });
+  }
+
   return true;
 }
 
@@ -179,4 +227,5 @@ module.exports = {
   iniciarStream,
   detenerStream,
   listarStreamsActivos,
+  CARPETA_STREAMS,
 };
