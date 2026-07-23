@@ -10,7 +10,11 @@
 const express = require("express");
 const router = express.Router();
 const ffmpegService = require("../services/ffmpeg");
-const { parsearLineaProgreso, parsearInfoStream } = require("../services/parserEstadisticas");
+const { parsearLineaProgreso, parsearInfoStream, detectarEventoPerdida } = require("../services/parserEstadisticas");
+
+// Contador acumulado de eventos de pérdida por canal (id -> número)
+// Vive en memoria mientras el canal está activo.
+const contadoresPerdida = {};
 
 // "io" se inyecta desde server.js para poder mandar logs en tiempo real
 module.exports = function (io) {
@@ -30,6 +34,8 @@ module.exports = function (io) {
     }
 
     try {
+      contadoresPerdida[id] = 0;
+
       ffmpegService.iniciarStream(
         datos,
         (mensaje) => {
@@ -50,8 +56,20 @@ module.exports = function (io) {
           if (infoStream) {
             io.emit("infoStream", { id, infoStream });
           }
+
+          // Detectamos si esta línea es una advertencia real de pérdida
+          const eventoPerdida = detectarEventoPerdida(mensaje);
+          if (eventoPerdida) {
+            contadoresPerdida[id] = (contadoresPerdida[id] || 0) + 1;
+            io.emit("perdida", {
+              id,
+              total: contadoresPerdida[id],
+              ultimoEvento: eventoPerdida,
+            });
+          }
         },
         (codigoSalida) => {
+          delete contadoresPerdida[id];
           io.emit("estado", { id, estado: "detenido", codigoSalida });
         }
       );

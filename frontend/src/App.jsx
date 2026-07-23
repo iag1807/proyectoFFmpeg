@@ -22,6 +22,7 @@ export default function App() {
   const [stats, setStats] = useState(null);
   const [infoVideo, setInfoVideo] = useState(null);
   const [infoAudio, setInfoAudio] = useState(null);
+  const [eventosPerdida, setEventosPerdida] = useState(null);
   const idActualRef = useRef(null); // guarda el id del stream que está corriendo
 
   // Nos conectamos a Socket.io una sola vez, cuando carga la página
@@ -56,6 +57,13 @@ export default function App() {
       }
     });
 
+    // Eventos de pérdida detectados por FFmpeg (contador acumulado)
+    socket.on("perdida", (data) => {
+      if (data.id === idActualRef.current) {
+        setEventosPerdida({ total: data.total, ultimoEvento: data.ultimoEvento });
+      }
+    });
+
     return () => socket.disconnect();
   }, []);
 
@@ -65,6 +73,7 @@ export default function App() {
     setStats(null);
     setInfoVideo(null);
     setInfoAudio(null);
+    setEventosPerdida(null);
 
     const respuesta = await fetch(`${BACKEND_URL}/api/stream/iniciar`, {
       method: "POST",
@@ -109,7 +118,7 @@ export default function App() {
         </div>
 
         <div className="columna-logs">
-          <StatsPanel stats={stats} infoVideo={infoVideo} infoAudio={infoAudio} />
+          <StatsPanel stats={stats} infoVideo={infoVideo} infoAudio={infoAudio} eventosPerdida={eventosPerdida} />
           <LogsStream logs={logs} />
         </div>
       </div>

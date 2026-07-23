@@ -6,7 +6,7 @@
  * de video/audio detectada (codec, resolución, canales de audio).
  */
 
-export default function StatsPanel({ stats, infoVideo, infoAudio }) {
+export default function StatsPanel({ stats, infoVideo, infoAudio, eventosPerdida }) {
   if (!stats) {
     return (
       <div className="stats-panel-vacio">
@@ -18,6 +18,8 @@ export default function StatsPanel({ stats, infoVideo, infoAudio }) {
   // El "speed" nos dice si la transmisión va al ritmo del tiempo real.
   // Por debajo de 0.95x lo marcamos en alerta (riesgo de acumular retraso).
   const speedEnRiesgo = stats.speed !== null && stats.speed < 0.95;
+  const totalPerdidas = eventosPerdida?.total ?? 0;
+  const hayPerdidas = totalPerdidas > 0;
 
   return (
     <div className="stats-panel">
@@ -51,13 +53,17 @@ export default function StatsPanel({ stats, infoVideo, infoAudio }) {
           <span className="stat-label">Fotogramas</span>
           <span className="stat-valor">{stats.frame ?? "--"}</span>
         </div>
+
+        <div className={`stat-card ${hayPerdidas ? "stat-alerta" : ""}`}>
+          <span className="stat-label">Alerta de pérdida</span>
+          <span className="stat-valor">{totalPerdidas}</span>
+        </div>
       </div>
 
       {(infoVideo || infoAudio) && (
         <div className="stats-info-canal">
           {infoVideo && (
             <div className="info-canal-item">
-              <span className="info-canal-titulo">Video</span>
               <span>Codec: {infoVideo.codec}</span>
               <span>Resolución: {infoVideo.resolucion}</span>
             </div>
@@ -75,6 +81,12 @@ export default function StatsPanel({ stats, infoVideo, infoAudio }) {
       {speedEnRiesgo && (
         <p className="stats-alerta-texto">
           ⚠ La velocidad de procesamiento está por debajo del tiempo real — riesgo de acumular retraso.
+        </p>
+      )}
+
+      {hayPerdidas && (
+        <p className="stats-alerta-texto">
+          ⚠ Último evento: {eventosPerdida.ultimoEvento?.tipo}
         </p>
       )}
     </div>

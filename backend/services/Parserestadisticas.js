@@ -73,4 +73,35 @@ function parsearInfoStream(linea) {
   return null;
 }
 
-module.exports = { parsearLineaProgreso, parsearInfoStream };
+/**
+ * FFmpeg reporta ciertos problemas reales de la señal como líneas de
+ * advertencia en su salida. No da un "contador de perdidos" como VLC,
+ * pero SÍ podemos detectar estas frases, que indican problemas reales:
+ *
+ *   "Non-monotonic DTS"    -> paquetes llegando fuera de orden/perdidos
+ *   "corrupt"              -> datos corruptos en el paquete
+ *   "missing picture"      -> un fotograma completo se perdió
+ *   "Packet corrupt"       -> paquete dañado descartado
+ *   "discontinuity"        -> hueco detectado en la señal (paquetes faltantes)
+ *
+ * Cada vez que aparece una de estas frases, la contamos como un
+ * "evento de pérdida" real confirmado por FFmpeg.
+ */
+const PATRONES_PERDIDA = [
+  { patron: /non-monotonic dts/i, tipo: "Orden de paquetes (DTS)" },
+  { patron: /corrupt/i, tipo: "Datos corruptos" },
+  { patron: /missing picture/i, tipo: "Fotograma perdido" },
+  { patron: /discontinuity/i, tipo: "Discontinuidad en la señal" },
+  { patron: /packet too large/i, tipo: "Paquete descartado" },
+];
+
+function detectarEventoPerdida(linea) {
+  for (const { patron, tipo } of PATRONES_PERDIDA) {
+    if (patron.test(linea)) {
+      return { tipo, mensaje: linea.trim() };
+    }
+  }
+  return null;
+}
+
+module.exports = { parsearLineaProgreso, parsearInfoStream, detectarEventoPerdida };
