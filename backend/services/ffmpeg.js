@@ -104,8 +104,17 @@ function construirParametrosAudio(datos) {
     if (bitrateAudio) args.push("-b:a", `${bitrateAudio}k`);
   }
 
-  // Si el usuario eligió una pista de audio específica (ej: "0" para la primera)
-  if (seleccionarAudio !== undefined && seleccionarAudio !== "") {
+  // Si el usuario eligió una pista de audio específica (ej: "0" para la primera).
+  // Nos protegemos de valores vacíos, undefined, null o el texto "null"
+  // (esto último puede pasar si el dato viene de la base de datos con un campo vacío).
+  const audioValido =
+    seleccionarAudio !== undefined &&
+    seleccionarAudio !== null &&
+    seleccionarAudio !== "" &&
+    seleccionarAudio !== "null" &&
+    !Number.isNaN(Number(seleccionarAudio));
+
+  if (audioValido) {
     args.push("-map", "0:v:0", "-map", `0:a:${seleccionarAudio}`);
   }
 

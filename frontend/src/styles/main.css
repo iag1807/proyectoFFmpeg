@@ -6,7 +6,7 @@
 }
 
 body {
-  background: #e4e4e4;
+  background: #0f172a;
   margin: 0;
   color: #e2e8f0;
 }
@@ -15,12 +15,12 @@ body {
   max-width: 1800px;
   margin: 40px auto;
   padding: 24px;
-  background: #fafafa;
+  background: #1e293b;
   border-radius: 12px;
 }
 
-h3{
-  color: #000;
+h1 {
+  margin-bottom: 0;
 }
 
 .subtitulo {
@@ -40,16 +40,15 @@ h3{
   flex-direction: column;
   gap: 4px;
   font-size: 14px;
-  color: #000;
 }
 
 .formulario-stream input,
 .formulario-stream select {
   padding: 8px 10px;
   border-radius: 6px;
-  border: 1px solid #e4e4e4;
-  background: #fafafa;
-  color: #000;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #e2e8f0;
 }
 
 .fila-doble {
@@ -59,7 +58,6 @@ h3{
 
 .fila-doble label {
   flex: 1;
-  color: #000;
 }
 
 .botones {
@@ -100,10 +98,6 @@ h3{
   font-weight: bold;
 }
 
-span{
-  color:#000;
-}
-
 .punto {
   width: 10px;
   height: 10px;
@@ -119,17 +113,17 @@ span{
 }
 
 .caja-logs {
-  background: #e4e4e4;
+  background: #0f172a;
   border-radius: 8px;
   padding: 12px;
 }
 
 .contenido-logs {
-  max-height: 435px;
+  max-height: 220px;
   overflow-y: auto;
   font-family: monospace;
   font-size: 12px;
-  color: #000;
+  color: #a3e635;
 }
 
 .linea-log {
@@ -146,9 +140,9 @@ span{
 
 .titulo-seccion {
   margin: 18px 0 4px;
-  color: #000;
+  color: #7dd3fc;
   font-size: 15px;
-  border-bottom: 1px solid #000;
+  border-bottom: 1px solid #334155;
   padding-bottom: 6px;
 }
 
@@ -157,13 +151,13 @@ span{
 }
 
 .grupo-avanzado {
-  background: #fafafa;
+  background: #16213a;
   border-radius: 8px;
   padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  border-left: 3px solid #e4e4e4;
+  border-left: 3px solid #38bdf8;
 }
 
 .fila-checkbox {
@@ -177,7 +171,7 @@ span{
 }
 
 .avanzado-salida {
-  background: #fafafa;
+  background: #16213a;
   border-radius: 8px;
   padding: 10px 12px;
   margin-top: 4px;
@@ -185,14 +179,14 @@ span{
 
 .avanzado-salida summary {
   cursor: pointer;
-  color: #000;
+  color: #94a3b8;
   font-size: 13px;
   padding: 4px 0;
 }
 
 .avanzado-salida[open] summary {
   margin-bottom: 10px;
-  color: #000;
+  color: #7dd3fc;
 }
 
 .avanzado-salida .fila-doble {
@@ -216,7 +210,7 @@ span{
 }
 
 .columna-formulario {
-  background: #e4e4e4;
+  background: #0f172a;
   padding: 20px;
   border-radius: 10px;
   max-height: 85vh;
@@ -236,7 +230,7 @@ span{
 /* --- Panel de estadísticas dinámicas --- */
 
 .stats-panel-vacio {
-  background: #e4e4e4;
+  background: #0f172a;
   border-radius: 8px;
   padding: 30px 20px;
   text-align: center;
@@ -246,7 +240,7 @@ span{
 }
 
 .stats-panel {
-  background: #e4e4e4;
+  background: #0f172a;
   border-radius: 8px;
   padding: 16px;
   margin-bottom: 16px;
@@ -259,13 +253,13 @@ span{
 }
 
 .stat-card {
-  background: #fafafa;
+  background: #16213a;
   border-radius: 8px;
   padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  border-left: 3px solid #000;
+  border-left: 3px solid #38bdf8;
 }
 
 .stat-card.stat-alerta {
@@ -274,15 +268,15 @@ span{
 
 .stat-label {
   font-size: 11px;
-  color: #000;
+  color: #94a3b8;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  font-weight: bold;
 }
 
 .stat-valor {
-  font-size: 16px;
-  color: #000;
+  font-size: 18px;
+  font-weight: bold;
+  color: #e2e8f0;
 }
 
 .stat-card.stat-alerta .stat-valor {
@@ -307,8 +301,7 @@ span{
 
 .info-canal-titulo {
   font-weight: bold;
-  font-size: 15px;
-  color: #000;
+  color: #7dd3fc;
   margin-bottom: 2px;
 }
 
@@ -322,4 +315,118 @@ span{
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+/* --- Pestañas de navegación --- */
+
+.pestañas {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0 4px;
+  border-bottom: 1px solid #334155;
+}
+
+.pestañas button {
+  background: transparent;
+  border: none;
+  padding: 10px 16px;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 14px;
+  border-bottom: 2px solid transparent;
+}
+
+.pestañas button.pestaña-activa {
+  color: #7dd3fc;
+  border-bottom-color: #38bdf8;
+}
+
+/* --- Lista de canales guardados --- */
+
+.lista-canales {
+  background: #0f172a;
+  border-radius: 10px;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.lista-canales-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.boton-nuevo-canal {
+  background: #22c55e;
+  color: #052e16;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.lista-canales-vacio {
+  color: #64748b;
+  font-size: 13px;
+  text-align: center;
+  padding: 20px 0;
+}
+
+.lista-canales-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.canal-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #16213a;
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+.canal-item-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.canal-item-nombre {
+  margin: 0;
+  font-weight: bold;
+  font-size: 14px;
+  color: #e2e8f0;
+}
+
+.canal-item-detalle {
+  margin: 0;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.canal-item-botones {
+  display: flex;
+  gap: 6px;
+}
+
+.canal-item-botones button {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  color: #e2e8f0;
+}
+
+.canal-item-botones button:hover {
+  background: #334155;
+}
+
+.boton-guardar {
+  background: #38bdf8 !important;
+  color: #082f49 !important;
 }

@@ -7,13 +7,21 @@
  * el protocolo elegido.
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const PROTOCOLOS_ENTRADA = ["UDP", "SRT", "FILE", "RTMP", "RTSP", "HTTP"];
 const PROTOCOLOS_SALIDA = ["UDP", "SRT", "HLS"];
 
+const PLACEHOLDERS = {
+  UDP: "udp://127.0.0.1:5000",
+  SRT: "srt://servidor:puerto",
+  FILE: "C:\\ruta\\al\\video.mp4",
+  RTMP: "rtmp://servidor/live/stream",
+  RTSP: "rtsp://servidor/stream",
+  HTTP: "http://servidor/stream.m3u8",
+};
 
-export default function FormStream({ onIniciar, onDetener, transmitiendo }) {
+export default function FormStream({ onIniciar, onDetener, transmitiendo, canalEditando, onGuardado }) {
   // ---- Datos generales ----
   const [nombreCanal, setNombreCanal] = useState("");
   const [protocolo, setProtocolo] = useState("SRT");
@@ -31,8 +39,8 @@ export default function FormStream({ onIniciar, onDetener, transmitiendo }) {
 
   // ---- Salida ----
   const [tipoSalida, setTipoSalida] = useState("UDP");
-  const [ipMulticast, setIpMulticast] = useState("");
-  const [puertoSalida, setPuertoSalida] = useState("");
+  const [ipMulticast, setIpMulticast] = useState("239.0.0.1");
+  const [puertoSalida, setPuertoSalida] = useState("1234");
 
   // ---- Salida avanzada (opcional, puede dejarse vacío = copiar tal cual) ----
   const [codecVideo, setCodecVideo] = useState("copy");
@@ -42,6 +50,56 @@ export default function FormStream({ onIniciar, onDetener, transmitiendo }) {
   const [codecAudio, setCodecAudio] = useState("copy");
   const [bitrateAudio, setBitrateAudio] = useState("");
   const [seleccionarAudio, setSeleccionarAudio] = useState("");
+
+  // ---- Vista previa en la página web (HLS adicional) ----
+  const [generarVistaPrevia, setGenerarVistaPrevia] = useState(false);
+
+  // Si nos pasan un canal para editar, precargamos sus datos en el formulario
+  useEffect(() => {
+    if (!canalEditando) return;
+    setNombreCanal(canalEditando.nombre_canal || "");
+    setProtocolo(canalEditando.protocolo || "SRT");
+    setUrlEntrada(canalEditando.url_entrada || "");
+    setModoSrt(canalEditando.modo_srt || "caller");
+    setLatencia(canalEditando.latencia?.toString() || "");
+    setEncriptacion(canalEditando.encriptacion || false);
+    setTipoAes(canalEditando.tipo_aes || "32");
+    setFraseSecreta(canalEditando.frase_secreta || "");
+    setTtlUdp(canalEditando.ttl_udp?.toString() || "");
+    setTipoSalida(canalEditando.tipo_salida || "UDP");
+    setIpMulticast(canalEditando.ip_salida || "");
+    setPuertoSalida(canalEditando.puerto_salida || "");
+    setCodecVideo(canalEditando.codec_video || "copy");
+    setBitrateVideo(canalEditando.bitrate_video || "");
+    setResolucion(canalEditando.resolucion || "");
+    setFps(canalEditando.fps || "");
+    setCodecAudio(canalEditando.codec_audio || "copy");
+    setBitrateAudio(canalEditando.bitrate_audio || "");
+    setSeleccionarAudio(canalEditando.seleccionar_audio || "");
+  }, [canalEditando]);
+
+  // Guarda (crea o actualiza) el canal en la base de datos, sin iniciar ffmpeg
+  async function manejarGuardar() {
+    const datos = {
+      nombreCanal, protocolo, urlEntrada, modoSrt, latencia, ttlUdp,
+      encriptacion, tipoAes, fraseSecreta, tipoSalida, ipMulticast,
+      puertoSalida, codecVideo, bitrateVideo, resolucion, fps,
+      codecAudio, bitrateAudio, seleccionarAudio,
+    };
+
+    const esEdicion = !!canalEditando;
+    const url = esEdicion
+      ? `http://localhost:4000/api/canales/${canalEditando.id}`
+      : "http://localhost:4000/api/canales";
+
+    await fetch(url, {
+      method: esEdicion ? "PUT" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(datos),
+    });
+
+    onGuardado?.();
+  }
 
   function manejarEnvio(e) {
     e.preventDefault();
@@ -67,6 +125,7 @@ export default function FormStream({ onIniciar, onDetener, transmitiendo }) {
       codecAudio,
       bitrateAudio,
       seleccionarAudio,
+      generarVistaPrevia,
     });
   }
 
@@ -79,6 +138,7 @@ export default function FormStream({ onIniciar, onDetener, transmitiendo }) {
         Nombre del canal
         <input
           type="text"
+          placeholder="Portadora 1-6"
           value={nombreCanal}
           onChange={(e) => setNombreCanal(e.target.value)}
         />
@@ -97,6 +157,7 @@ export default function FormStream({ onIniciar, onDetener, transmitiendo }) {
         URL de entrada
         <input
           type="text"
+          placeholder={PLACEHOLDERS[protocolo]}
           value={urlEntrada}
           onChange={(e) => setUrlEntrada(e.target.value)}
           required
@@ -225,6 +286,7 @@ export default function FormStream({ onIniciar, onDetener, transmitiendo }) {
             Bitrate Video (kbps)
             <input
               type="number"
+              placeholder="4500"
               value={bitrateVideo}
               onChange={(e) => setBitrateVideo(e.target.value)}
               disabled={codecVideo === "copy"}
@@ -237,6 +299,7 @@ export default function FormStream({ onIniciar, onDetener, transmitiendo }) {
             Resolución
             <input
               type="text"
+              placeholder="1920x1080"
               value={resolucion}
               onChange={(e) => setResolucion(e.target.value)}
               disabled={codecVideo === "copy"}
@@ -247,6 +310,7 @@ export default function FormStream({ onIniciar, onDetener, transmitiendo }) {
             FPS
             <input
               type="number"
+              placeholder="30"
               value={fps}
               onChange={(e) => setFps(e.target.value)}
               disabled={codecVideo === "copy"}
@@ -268,6 +332,7 @@ export default function FormStream({ onIniciar, onDetener, transmitiendo }) {
             Bitrate Audio (kbps)
             <input
               type="number"
+              placeholder="128"
               value={bitrateAudio}
               onChange={(e) => setBitrateAudio(e.target.value)}
               disabled={codecAudio === "copy"}
@@ -279,13 +344,26 @@ export default function FormStream({ onIniciar, onDetener, transmitiendo }) {
           Seleccionar pista de audio (0 = primera, 1 = segunda...)
           <input
             type="number"
+            placeholder="0"
             value={seleccionarAudio}
             onChange={(e) => setSeleccionarAudio(e.target.value)}
           />
         </label>
       </details>
 
+      <label className="fila-checkbox vista-previa-check">
+        <input
+          type="checkbox"
+          checked={generarVistaPrevia}
+          onChange={(e) => setGenerarVistaPrevia(e.target.checked)}
+        />
+        Mostrar vista previa del canal en esta página (agrega un poco de retraso)
+      </label>
+
       <div className="botones">
+        <button type="button" onClick={manejarGuardar} className="boton-guardar">
+          ◰ {canalEditando ? "Actualizar canal" : "Guardar canal"}
+        </button>
         <button type="submit" disabled={transmitiendo}>▶ Iniciar</button>
         <button type="button" onClick={onDetener} disabled={!transmitiendo}>⏹ Detener</button>
       </div>
