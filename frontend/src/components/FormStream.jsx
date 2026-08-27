@@ -51,8 +51,7 @@ export default function FormStream({ onIniciar, onDetener, transmitiendo, canalE
   const [bitrateAudio, setBitrateAudio] = useState("");
   const [seleccionarAudio, setSeleccionarAudio] = useState("");
 
-  // ---- Vista previa en la página web (HLS adicional) ----
-  const [generarVistaPrevia, setGenerarVistaPrevia] = useState(false);
+  // ---- Vista previa: FUNCIONALIDAD ELIMINADA (generaba retraso, no servía para monitoreo en vivo) ----
 
   // Si nos pasan un canal para editar, precargamos sus datos en el formulario
   useEffect(() => {
@@ -125,14 +124,13 @@ export default function FormStream({ onIniciar, onDetener, transmitiendo, canalE
       codecAudio,
       bitrateAudio,
       seleccionarAudio,
-      generarVistaPrevia,
     });
   }
 
   return (
     <form onSubmit={manejarEnvio} className="formulario-stream">
       {/* ---------------- ENTRADA ---------------- */}
-      <h3 className="titulo-seccion">Entrada</h3>
+      <h3 className="titulo-seccion">📥 Entrada</h3>
 
       <label>
         Nombre del canal
@@ -234,7 +232,7 @@ export default function FormStream({ onIniciar, onDetener, transmitiendo, canalE
       )}
 
       {/* ---------------- SALIDA ---------------- */}
-      <h3 className="titulo-seccion">Salida</h3>
+      <h3 className="titulo-seccion">📤 Salida</h3>
 
       <label>
         Tipo de salida
@@ -351,18 +349,9 @@ export default function FormStream({ onIniciar, onDetener, transmitiendo, canalE
         </label>
       </details>
 
-      <label className="fila-checkbox vista-previa-check">
-        <input
-          type="checkbox"
-          checked={generarVistaPrevia}
-          onChange={(e) => setGenerarVistaPrevia(e.target.checked)}
-        />
-        Mostrar vista previa del canal en esta página (agrega un poco de retraso)
-      </label>
-
       <div className="botones">
         <button type="button" onClick={manejarGuardar} className="boton-guardar">
-          ◰ {canalEditando ? "Actualizar canal" : "Guardar canal"}
+          💾 {canalEditando ? "Actualizar canal" : "Guardar canal"}
         </button>
         <button type="submit" disabled={transmitiendo}>▶ Iniciar</button>
         <button type="button" onClick={onDetener} disabled={!transmitiendo}>⏹ Detener</button>

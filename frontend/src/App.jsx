@@ -13,12 +13,16 @@ import StatusStream from "./components/StatusStream";
 import LogsStream from "./components/LogsStream";
 import StatsPanel from "./components/StatsPanel";
 import ListaCanales from "./components/ListaCanales";
+import FormMpts from "./components/FormMpts";
+import ListaMpts from "./components/ListaMpts";
 import "./styles/main.css";
 
 const BACKEND_URL = "http://localhost:4000";
 
 export default function App() {
-  const [vista, setVista] = useState("transmision"); // "transmision" | "canales"
+  const [vista, setVista] = useState("transmision"); // "transmision" | "canales" | "mpts"
+  const [mostrandoFormMpts, setMostrandoFormMpts] = useState(false);
+  const [refrescarMpts, setRefrescarMpts] = useState(0);
   const [canalEditando, setCanalEditando] = useState(null);
   const [logs, setLogs] = useState([]);
   const [transmitiendo, setTransmitiendo] = useState(false);
@@ -151,6 +155,16 @@ export default function App() {
         >
           Canales guardados
         </button>
+        <button
+          type="button"
+          className={vista === "mpts" ? "pestaña-activa" : ""}
+          onClick={() => {
+            setVista("mpts");
+            setMostrandoFormMpts(false);
+          }}
+        >
+          Grupos MPTS
+        </button>
       </div>
 
       {vista === "transmision" && (
@@ -189,6 +203,23 @@ export default function App() {
           }}
           onIniciar={manejarIniciarGuardado}
           onDetener={manejarDetener}
+        />
+      )}
+
+      {vista === "mpts" && !mostrandoFormMpts && (
+        <ListaMpts
+          refrescarSenal={refrescarMpts}
+          onNuevoGrupo={() => setMostrandoFormMpts(true)}
+        />
+      )}
+
+      {vista === "mpts" && mostrandoFormMpts && (
+        <FormMpts
+          onCancelar={() => setMostrandoFormMpts(false)}
+          onCreado={() => {
+            setMostrandoFormMpts(false);
+            setRefrescarMpts((n) => n + 1);
+          }}
         />
       )}
     </div>

@@ -7,22 +7,8 @@
  */
 
 const { spawn } = require("child_process");
-const fs = require("fs");
-const path = require("path");
 
 const procesosActivos = {};
-
-// Carpeta donde se guardan los segmentos HLS de cada canal,
-// para que el navegador pueda pedirlos como archivos normales.
-const CARPETA_STREAMS = path.join(__dirname, "..", "streams");
-
-function asegurarCarpetaCanal(id) {
-  const carpeta = path.join(CARPETA_STREAMS, id);
-  if (!fs.existsSync(carpeta)) {
-    fs.mkdirSync(carpeta, { recursive: true });
-  }
-  return carpeta;
-}
 
 /**
  * Arma el string de entrada (-i) agregando los parámetros
@@ -152,7 +138,7 @@ function construirSalida(datos) {
  * parámetros configurados por el usuario en el formulario avanzado.
  */
 function iniciarStream(datos, onLog, onClose) {
-  const { id, generarVistaPrevia } = datos;
+  const { id } = datos;
 
   if (procesosActivos[id]) {
     throw new Error("Ya existe una transmisión activa con este id");
@@ -163,7 +149,6 @@ function iniciarStream(datos, onLog, onClose) {
   const paramsAudio = construirParametrosAudio(datos);
   const { formato, destino } = construirSalida(datos);
 
-  // Salida principal (la que ya teniamos: Multicast, SRT o HLS "real")
   const args = [
     "-i", entrada,
     ...paramsVideo,
@@ -171,26 +156,6 @@ function iniciarStream(datos, onLog, onClose) {
     "-f", formato,
     destino,
   ];
-
-  // Si el usuario activo la vista previa web, agregamos UNA SEGUNDA salida
-  // en el MISMO comando de ffmpeg: un HLS liviano guardado en disco,
-  // que el navegador podra reproducir con hls.js
-  if (generarVistaPrevia) {
-    const carpetaCanal = asegurarCarpetaCanal(id);
-    const rutaM3u8 = path.join(carpetaCanal, "index.m3u8");
-
-    args.push(
-      "-c:v", "libx264",
-      "-c:a", "aac",
-      "-f", "hls",
-      "-hls_time", "4",
-      "-hls_list_size", "5",
-      "-hls_flags", "delete_segments",
-      rutaM3u8
-    );
-
-    onLog(`Vista previa HLS habilitada en: /streams/${id}/index.m3u8`);
-  }
 
   onLog(`Comando ejecutado: ffmpeg ${args.join(" ")}`);
 
@@ -218,13 +183,6 @@ function detenerStream(id) {
   if (!proceso) return false;
   proceso.kill("SIGINT");
   delete procesosActivos[id];
-
-  // Limpiamos los archivos .ts y .m3u8 del canal, ya no se necesitan
-  const carpetaCanal = path.join(CARPETA_STREAMS, id);
-  if (fs.existsSync(carpetaCanal)) {
-    fs.rmSync(carpetaCanal, { recursive: true, force: true });
-  }
-
   return true;
 }
 
@@ -232,9 +190,127 @@ function listarStreamsActivos() {
   return Object.keys(procesosActivos);
 }
 
+/**
+ * ------------------------------------------------------------------
+ * MPTS — Multiple Program Transport Stream
+ * ------------------------------------------------------------------
+ * A diferencia de un SPTS (un canal = un flujo), aquí tomamos VARIOS
+ * canales guardados y los combinamos en un solo comando de FFmpeg,
+ * con una entrada (-i) por cada canal y un "-map" que le dice a
+ * FFmpeg "agrega este video/audio como un programa más" dentro del
+ * mismo flujo de salida.
+ *
+ * Ejemplo con 3 canales, el comando final se parece a esto:
+ *
+ *   ffmpeg -i srt://canal1 -i udp://canal2 -i rtmp://canal3
+ *          -map 0:v -map 0:a
+ *          -map 1:v -map 1:a
+ *          -map 2:v -map 2:a
+ *          -c copy -f mpegts udp://227.1.1.6:5006
+ */
+
+const procesosMptsActivos = {};
+
+/**
+ * Arma el bloque de entrada (-i ...) para UN canal dentro del MPTS,
+ * reutilizando la misma lógica de construirEntrada() que ya usamos
+ * para SPTS individuales (así los canales SRT dentro del MPTS
+ * también respetan latencia, modo caller/listener, encriptación, etc.)
+ */
+function construirEntradaParaMpts(canal) {
+  // Reutilizamos construirEntrada() adaptando los nombres de campo,
+  // porque los canales guardados en la base de datos usan snake_case
+  // (protocolo, url_entrada, modo_srt...) en vez de camelCase.
+  return construirEntrada({
+    protocolo: canal.protocolo,
+    urlEntrada: canal.url_entrada,
+    modoSrt: canal.modo_srt,
+    latencia: canal.latencia,
+    ttlUdp: canal.ttl_udp,
+    encriptacion: canal.encriptacion,
+    tipoAes: canal.tipo_aes,
+    fraseSecreta: canal.frase_secreta,
+  });
+}
+
+/**
+ * Inicia un grupo MPTS: recibe la lista de canales guardados (ya
+ * consultados desde la base de datos) y la IP/puerto de salida
+ * combinada, arma un solo comando de ffmpeg con multiples -i y -map.
+ *
+ * @param {object} datos - { grupoId, canales: [canal1, canal2, ...], ipSalida, puertoSalida }
+ */
+function iniciarMpts(datos, onLog, onClose) {
+  const { grupoId, canales, ipSalida, puertoSalida } = datos;
+
+  if (procesosMptsActivos[grupoId]) {
+    throw new Error("Ya existe un MPTS activo con este id de grupo");
+  }
+
+  if (!canales || canales.length === 0) {
+    throw new Error("El grupo MPTS necesita al menos un canal");
+  }
+
+  const args = [];
+
+  // Un -i por cada canal del grupo
+  canales.forEach((canal) => {
+    args.push("-i", construirEntradaParaMpts(canal));
+  });
+
+  // Un -map por cada canal, indicando "toma el video y audio
+  // de la entrada N y agregalo como un programa mas"
+  canales.forEach((_, indice) => {
+    args.push("-map", `${indice}:v`, "-map", `${indice}:a`);
+  });
+
+  // Copiamos todo tal cual llega (sin recodificar), igual que en SPTS
+  // por defecto -- es lo mas liviano para el servidor.
+  args.push("-c", "copy");
+
+  // Salida combinada: un solo flujo mpegts con todos los programas adentro
+  const params = ["pkt_size=1316", "buffer_size=655360"];
+  const destino = `udp://${ipSalida}:${puertoSalida}?${params.join("&")}`;
+  args.push("-f", "mpegts", destino);
+
+  onLog(`Comando MPTS ejecutado: ffmpeg ${args.join(" ")}`);
+
+  const proceso = spawn("ffmpeg", args);
+  procesosMptsActivos[grupoId] = proceso;
+
+  proceso.stderr.on("data", (chunk) => {
+    onLog(chunk.toString());
+  });
+
+  proceso.on("close", (code) => {
+    delete procesosMptsActivos[grupoId];
+    onClose(code);
+  });
+
+  proceso.on("error", (err) => {
+    onLog(`Error al ejecutar FFmpeg (MPTS): ${err.message}`);
+  });
+
+  return proceso;
+}
+
+function detenerMpts(grupoId) {
+  const proceso = procesosMptsActivos[grupoId];
+  if (!proceso) return false;
+  proceso.kill("SIGINT");
+  delete procesosMptsActivos[grupoId];
+  return true;
+}
+
+function listarMptsActivos() {
+  return Object.keys(procesosMptsActivos);
+}
+
 module.exports = {
   iniciarStream,
   detenerStream,
   listarStreamsActivos,
-  CARPETA_STREAMS,
+  iniciarMpts,
+  detenerMpts,
+  listarMptsActivos,
 };

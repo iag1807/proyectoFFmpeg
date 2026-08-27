@@ -24,12 +24,6 @@ const io = new Server(server, {
 app.use(cors());
 app.use(express.json());
 
-// Sirve los archivos .m3u8 y .ts de cada canal como archivos estáticos normales,
-// para que el navegador (con hls.js) pueda pedirlos por HTTP.
-// Ej: http://localhost:4000/streams/canal-123/index.m3u8
-const ffmpegService = require("./services/ffmpeg");
-app.use("/streams", express.static(ffmpegService.CARPETA_STREAMS));
-
 // Rutas de la API, le pasamos "io" para poder emitir eventos desde ahí
 const streamRoutes = require("./routes/stream")(io);
 app.use("/api/stream", streamRoutes);
@@ -37,6 +31,10 @@ app.use("/api/stream", streamRoutes);
 // Rutas para guardar/listar/editar/eliminar canales (CRUD, sin ejecutar ffmpeg)
 const canalesRoutes = require("./routes/canales");
 app.use("/api/canales", canalesRoutes);
+
+// Rutas para crear/listar/iniciar/detener grupos MPTS
+const mptsRoutes = require("./routes/mpts")(io);
+app.use("/api/mpts", mptsRoutes);
 
 io.on("connection", (socket) => {
   console.log("Cliente conectado:", socket.id);
