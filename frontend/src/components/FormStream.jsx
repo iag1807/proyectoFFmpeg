@@ -12,15 +12,6 @@ import { useState, useEffect } from "react";
 const PROTOCOLOS_ENTRADA = ["UDP", "SRT", "FILE", "RTMP", "RTSP", "HTTP"];
 const PROTOCOLOS_SALIDA = ["UDP", "SRT", "HLS"];
 
-const PLACEHOLDERS = {
-  UDP: "udp://127.0.0.1:5000",
-  SRT: "srt://servidor:puerto",
-  FILE: "C:\\ruta\\al\\video.mp4",
-  RTMP: "rtmp://servidor/live/stream",
-  RTSP: "rtsp://servidor/stream",
-  HTTP: "http://servidor/stream.m3u8",
-};
-
 export default function FormStream({ onIniciar, onDetener, transmitiendo, canalEditando, onGuardado }) {
   // ---- Datos generales ----
   const [nombreCanal, setNombreCanal] = useState("");
@@ -39,8 +30,8 @@ export default function FormStream({ onIniciar, onDetener, transmitiendo, canalE
 
   // ---- Salida ----
   const [tipoSalida, setTipoSalida] = useState("UDP");
-  const [ipMulticast, setIpMulticast] = useState("239.0.0.1");
-  const [puertoSalida, setPuertoSalida] = useState("1234");
+  const [ipMulticast, setIpMulticast] = useState("");
+  const [puertoSalida, setPuertoSalida] = useState("");
 
   // ---- Salida avanzada (opcional, puede dejarse vacío = copiar tal cual) ----
   const [codecVideo, setCodecVideo] = useState("copy");
@@ -130,13 +121,12 @@ export default function FormStream({ onIniciar, onDetener, transmitiendo, canalE
   return (
     <form onSubmit={manejarEnvio} className="formulario-stream">
       {/* ---------------- ENTRADA ---------------- */}
-      <h3 className="titulo-seccion">📥 Entrada</h3>
+      <h3 className="titulo-seccion">Entrada</h3>
 
       <label>
         Nombre del canal
         <input
           type="text"
-          placeholder="Portadora 1-6"
           value={nombreCanal}
           onChange={(e) => setNombreCanal(e.target.value)}
         />
@@ -155,7 +145,6 @@ export default function FormStream({ onIniciar, onDetener, transmitiendo, canalE
         URL de entrada
         <input
           type="text"
-          placeholder={PLACEHOLDERS[protocolo]}
           value={urlEntrada}
           onChange={(e) => setUrlEntrada(e.target.value)}
           required
@@ -232,7 +221,7 @@ export default function FormStream({ onIniciar, onDetener, transmitiendo, canalE
       )}
 
       {/* ---------------- SALIDA ---------------- */}
-      <h3 className="titulo-seccion">📤 Salida</h3>
+      <h3 className="titulo-seccion">Salida</h3>
 
       <label>
         Tipo de salida
@@ -284,7 +273,6 @@ export default function FormStream({ onIniciar, onDetener, transmitiendo, canalE
             Bitrate Video (kbps)
             <input
               type="number"
-              placeholder="4500"
               value={bitrateVideo}
               onChange={(e) => setBitrateVideo(e.target.value)}
               disabled={codecVideo === "copy"}
@@ -297,7 +285,6 @@ export default function FormStream({ onIniciar, onDetener, transmitiendo, canalE
             Resolución
             <input
               type="text"
-              placeholder="1920x1080"
               value={resolucion}
               onChange={(e) => setResolucion(e.target.value)}
               disabled={codecVideo === "copy"}
@@ -308,7 +295,6 @@ export default function FormStream({ onIniciar, onDetener, transmitiendo, canalE
             FPS
             <input
               type="number"
-              placeholder="30"
               value={fps}
               onChange={(e) => setFps(e.target.value)}
               disabled={codecVideo === "copy"}
@@ -330,7 +316,6 @@ export default function FormStream({ onIniciar, onDetener, transmitiendo, canalE
             Bitrate Audio (kbps)
             <input
               type="number"
-              placeholder="128"
               value={bitrateAudio}
               onChange={(e) => setBitrateAudio(e.target.value)}
               disabled={codecAudio === "copy"}
@@ -342,7 +327,6 @@ export default function FormStream({ onIniciar, onDetener, transmitiendo, canalE
           Seleccionar pista de audio (0 = primera, 1 = segunda...)
           <input
             type="number"
-            placeholder="0"
             value={seleccionarAudio}
             onChange={(e) => setSeleccionarAudio(e.target.value)}
           />
@@ -351,7 +335,7 @@ export default function FormStream({ onIniciar, onDetener, transmitiendo, canalE
 
       <div className="botones">
         <button type="button" onClick={manejarGuardar} className="boton-guardar">
-          💾 {canalEditando ? "Actualizar canal" : "Guardar canal"}
+          {canalEditando ? "Actualizar canal" : "Guardar canal"}
         </button>
         <button type="submit" disabled={transmitiendo}>▶ Iniciar</button>
         <button type="button" onClick={onDetener} disabled={!transmitiendo}>⏹ Detener</button>
