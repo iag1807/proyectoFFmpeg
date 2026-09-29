@@ -17,6 +17,7 @@ export default function FormMpts({ onCreado, onCancelar }) {
 
   const [nombreGrupo, setNombreGrupo] = useState("");
   const [canalesSeleccionados, setCanalesSeleccionados] = useState([]);
+  const [tipoSalida, setTipoSalida] = useState("UDP");
   const [ipSalida, setIpSalida] = useState("");
   const [puertoSalida, setPuertoSalida] = useState("");
 
@@ -49,6 +50,7 @@ export default function FormMpts({ onCreado, onCancelar }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         nombreGrupo,
+        tipoSalida,
         ipSalida,
         puertoSalida,
         canalesIds: canalesSeleccionados,
@@ -66,6 +68,7 @@ export default function FormMpts({ onCreado, onCancelar }) {
         Nombre del grupo
         <input
           type="text"
+          placeholder="Portadora 1-6"
           value={nombreGrupo}
           onChange={(e) => setNombreGrupo(e.target.value)}
           required
@@ -96,11 +99,20 @@ export default function FormMpts({ onCreado, onCancelar }) {
         ))}
       </div>
 
+      <label>
+        Tipo de salida
+        <select value={tipoSalida} onChange={(e) => setTipoSalida(e.target.value)}>
+          <option value="UDP">UDP</option>
+          <option value="SRT">SRT</option>
+        </select>
+      </label>
+
       <div className="fila-doble">
         <label>
-          IP de salida MPTS
+          {tipoSalida === "SRT" ? "IP de salida (SRT listener)" : "IP de salida MPTS"}
           <input
             type="text"
+            placeholder="227.1.1.6"
             value={ipSalida}
             onChange={(e) => setIpSalida(e.target.value)}
             required
@@ -111,6 +123,7 @@ export default function FormMpts({ onCreado, onCancelar }) {
           Puerto
           <input
             type="text"
+            placeholder="5006"
             value={puertoSalida}
             onChange={(e) => setPuertoSalida(e.target.value)}
             required
@@ -118,8 +131,14 @@ export default function FormMpts({ onCreado, onCancelar }) {
         </label>
       </div>
 
+      {tipoSalida === "SRT" && (
+        <p className="mpts-subtitulo">
+          La salida quedará en modo "listener" — el receptor (ej. el Servidor 3) debe conectarse hacia esta IP y puerto como "caller".
+        </p>
+      )}
+
       <div className="botones">
-        <button type="submit">Guardar grupo</button>
+        <button type="submit">💾 Guardar grupo</button>
         <button type="button" onClick={onCancelar}>Cancelar</button>
       </div>
     </form>

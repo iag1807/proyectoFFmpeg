@@ -293,10 +293,19 @@ function iniciarMpts(datos, onLog, onClose) {
     );
   });
 
-  // Salida combinada: un solo flujo mpegts con todos los programas adentro
-  const params = ["pkt_size=1316", "buffer_size=655360"];
-  const destino = `udp://${ipSalida}:${puertoSalida}?${params.join("&")}`;
-  args.push("-f", "mpegts", destino);
+  // Salida combinada: un solo flujo mpegts con todos los programas adentro.
+  // Reutilizamos construirSalida() para que el MPTS soporte los mismos
+  // tipos de salida que un canal SPTS individual (UDP o SRT). Esto es
+  // importante porque en algunas redes con firewall, UDP plano se
+  // bloquea pero SRT si pasa (SRT hace un "handshake" inicial que
+  // muchos firewalls reconocen como conexion legitima).
+  const { formato, destino } = construirSalida({
+    tipoSalida: datos.tipoSalida || "UDP",
+    ipMulticast: ipSalida,
+    puertoSalida,
+    ttlUdp: datos.ttlUdp,
+  });
+  args.push("-f", formato, destino);
 
   onLog(`Comando MPTS ejecutado: ffmpeg ${args.join(" ")}`);
 

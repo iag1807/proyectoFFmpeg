@@ -14,7 +14,7 @@ const ffmpegService = require("../services/ffmpeg");
 module.exports = function (io) {
   // Crear un grupo MPTS nuevo: nombre, salida, y la lista de ids de canales que incluye
   router.post("/", async (req, res) => {
-    const { nombreGrupo, ipSalida, puertoSalida, canalesIds } = req.body;
+    const { nombreGrupo, tipoSalida, ipSalida, puertoSalida, canalesIds } = req.body;
 
     if (!nombreGrupo || !ipSalida || !puertoSalida || !canalesIds?.length) {
       return res.status(400).json({ error: "Faltan datos requeridos (nombre, salida o canales)" });
@@ -25,9 +25,9 @@ module.exports = function (io) {
       await cliente.query("BEGIN");
 
       const grupoResultado = await cliente.query(
-        `INSERT INTO grupos_mpts (nombre_grupo, ip_salida_mpts, puerto_salida_mpts)
-         VALUES ($1, $2, $3) RETURNING *`,
-        [nombreGrupo, ipSalida, puertoSalida]
+        `INSERT INTO grupos_mpts (nombre_grupo, tipo_salida_mpts, ip_salida_mpts, puerto_salida_mpts)
+         VALUES ($1, $2, $3, $4) RETURNING *`,
+        [nombreGrupo, tipoSalida || "UDP", ipSalida, puertoSalida]
       );
       const grupo = grupoResultado.rows[0];
 
@@ -125,6 +125,7 @@ module.exports = function (io) {
         {
           grupoId,
           canales: canalesResultado.rows,
+          tipoSalida: grupo.tipo_salida_mpts,
           ipSalida: grupo.ip_salida_mpts,
           puertoSalida: grupo.puerto_salida_mpts,
         },

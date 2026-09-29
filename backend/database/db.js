@@ -17,7 +17,7 @@ const pool = new Pool({
   host: "localhost",
   port: 5432,
   user: "postgres",
-  password: "1234", 
+  password: "1234", // <-- reemplaza con la contraseña que creaste al instalar
   database: "stream_manager",
 });
 
@@ -58,10 +58,18 @@ async function inicializarBaseDeDatos() {
     CREATE TABLE IF NOT EXISTS grupos_mpts (
       id SERIAL PRIMARY KEY,
       nombre_grupo TEXT NOT NULL,
+      tipo_salida_mpts TEXT NOT NULL DEFAULT 'UDP',
       ip_salida_mpts TEXT NOT NULL,
       puerto_salida_mpts TEXT NOT NULL,
       fecha_creacion TIMESTAMP DEFAULT NOW()
     );
+  `);
+
+  // Migracion: si la tabla ya existia de antes (sin esta columna),
+  // la agregamos ahora. IF NOT EXISTS evita error si ya se aplico.
+  await pool.query(`
+    ALTER TABLE grupos_mpts
+    ADD COLUMN IF NOT EXISTS tipo_salida_mpts TEXT NOT NULL DEFAULT 'UDP';
   `);
 
   // Tabla intermedia: qué canales pertenecen a qué grupo MPTS
