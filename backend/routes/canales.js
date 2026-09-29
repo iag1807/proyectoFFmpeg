@@ -10,6 +10,7 @@
 const express = require("express");
 const router = express.Router();
 const { pool } = require("../database/db");
+const ffmpegService = require("../services/ffmpeg");
 
 // Crear un canal nuevo
 router.post("/", async (req, res) => {
@@ -117,6 +118,12 @@ router.put("/:id", async (req, res) => {
 // Eliminar un canal
 router.delete("/:id", async (req, res) => {
   try {
+    // Igual que con los grupos MPTS: si este canal esta transmitiendo
+    // (como SPTS individual, iniciado desde "Canales guardados"),
+    // detenemos el proceso de ffmpeg antes de borrar el registro,
+    // para no dejar procesos huerfanos ocupando el puerto.
+    ffmpegService.detenerStream(String(req.params.id));
+
     const resultado = await pool.query(
       "DELETE FROM canales_spts WHERE id = $1 RETURNING *",
       [req.params.id]

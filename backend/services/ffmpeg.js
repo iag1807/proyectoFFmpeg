@@ -268,6 +268,31 @@ function iniciarMpts(datos, onLog, onClose) {
   // por defecto -- es lo mas liviano para el servidor.
   args.push("-c", "copy");
 
+  // ------------------------------------------------------------------
+  // Definimos explicitamente los "programas" del MPTS, uno por canal,
+  // en vez de dejar que ffmpeg los agrupe todos como un solo Program.
+  // Cada canal aporta 2 streams de SALIDA seguidos (video y audio),
+  // asi que el canal en la posicion "indice" ocupa los streams de
+  // salida (indice*2) y (indice*2 + 1).
+  //
+  // -program title="Nombre":program_num=N:st=X:st=Y
+  //
+  // Esto hace que, por ejemplo en VLC, el usuario pueda elegir entre
+  // "Programa 1", "Programa 2"... cada uno siendo un canal distinto,
+  // igual que en un decodificador de TV real.
+  // ------------------------------------------------------------------
+  canales.forEach((canal, indice) => {
+    const streamVideo = indice * 2;
+    const streamAudio = indice * 2 + 1;
+    const numeroPrograma = indice + 1;
+    const tituloLimpio = (canal.nombre_canal || `Canal ${numeroPrograma}`).replace(/"/g, "");
+
+    args.push(
+      "-program",
+      `title="${tituloLimpio}":program_num=${numeroPrograma}:st=${streamVideo}:st=${streamAudio}`
+    );
+  });
+
   // Salida combinada: un solo flujo mpegts con todos los programas adentro
   const params = ["pkt_size=1316", "buffer_size=655360"];
   const destino = `udp://${ipSalida}:${puertoSalida}?${params.join("&")}`;

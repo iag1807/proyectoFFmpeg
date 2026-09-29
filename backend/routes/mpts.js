@@ -80,6 +80,12 @@ module.exports = function (io) {
   // Eliminar un grupo MPTS (borra tambien sus relaciones por el ON DELETE CASCADE)
   router.delete("/:id", async (req, res) => {
     try {
+      // Muy importante: si el grupo esta transmitiendo, detenemos el
+      // proceso de ffmpeg PRIMERO. Si no, el proceso queda "huerfano"
+      // corriendo en el sistema, ocupando los puertos/canales para
+      // siempre, aunque el grupo ya no exista en la base de datos.
+      ffmpegService.detenerMpts(req.params.id);
+
       const resultado = await pool.query(
         "DELETE FROM grupos_mpts WHERE id = $1 RETURNING *",
         [req.params.id]
@@ -89,6 +95,7 @@ module.exports = function (io) {
         return res.status(404).json({ error: "Grupo no encontrado" });
       }
 
+      io.emit("mptsEstado", { grupoId: req.params.id, estado: "detenido" });
       res.json({ ok: true, mensaje: "Grupo MPTS eliminado" });
     } catch (err) {
       res.status(500).json({ error: err.message });
