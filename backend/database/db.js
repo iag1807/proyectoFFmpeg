@@ -17,7 +17,7 @@ const pool = new Pool({
   host: "localhost",
   port: 5432,
   user: "postgres",
-  password: "2026", 
+  password: "1234", 
   database: "stream_manager",
 });
 
