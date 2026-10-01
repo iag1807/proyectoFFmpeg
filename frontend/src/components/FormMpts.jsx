@@ -1,12 +1,3 @@
-/**
- * components/FormMpts.jsx
- * -------------------------
- * Formulario para crear un grupo MPTS: se eligen canales YA
- * GUARDADOS (checkboxes) y se define la IP/puerto de salida
- * combinada. Al guardar, el backend arma un solo comando de
- * FFmpeg que empaqueta todos los canales elegidos.
- */
-
 import { useEffect, useState } from "react";
 
 const BACKEND_URL = "http://localhost:4000";

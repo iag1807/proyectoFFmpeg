@@ -1,12 +1,3 @@
-/**
- * routes/canales.js
- * -------------------
- * CRUD de canales SPTS guardados en la base de datos.
- * Esto es DIFERENTE de "iniciar una transmisión" (eso sigue en
- * routes/stream.js). Aquí solo se guarda/lee/edita/borra la
- * CONFIGURACIÓN de cada canal, para no perderla al cerrar la página.
- */
-
 const express = require("express");
 const router = express.Router();
 const { pool } = require("../database/db");
@@ -118,10 +109,6 @@ router.put("/:id", async (req, res) => {
 // Eliminar un canal
 router.delete("/:id", async (req, res) => {
   try {
-    // Igual que con los grupos MPTS: si este canal esta transmitiendo
-    // (como SPTS individual, iniciado desde "Canales guardados"),
-    // detenemos el proceso de ffmpeg antes de borrar el registro,
-    // para no dejar procesos huerfanos ocupando el puerto.
     ffmpegService.detenerStream(String(req.params.id));
 
     const resultado = await pool.query(

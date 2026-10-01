@@ -1,11 +1,3 @@
-/**
- * components/StatsPanel.jsx
- * --------------------------
- * Muestra tarjetas con las estadísticas en vivo de la transmisión:
- * bitrate, fps, velocidad, tiempo transcurrido, tamaño, y la info
- * de video/audio detectada (codec, resolución, canales de audio).
- */
-
 export default function StatsPanel({ stats, infoVideo, infoAudio, eventosPerdida }) {
   if (!stats) {
     return (
@@ -15,8 +7,6 @@ export default function StatsPanel({ stats, infoVideo, infoAudio, eventosPerdida
     );
   }
 
-  // El "speed" nos dice si la transmisión va al ritmo del tiempo real.
-  // Por debajo de 0.95x lo marcamos en alerta (riesgo de acumular retraso).
   const speedEnRiesgo = stats.speed !== null && stats.speed < 0.95;
   const totalPerdidas = eventosPerdida?.total ?? 0;
   const hayPerdidas = totalPerdidas > 0;

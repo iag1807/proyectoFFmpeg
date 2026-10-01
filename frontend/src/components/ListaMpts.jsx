@@ -1,11 +1,3 @@
-/**
- * components/ListaMpts.jsx
- * --------------------------
- * Muestra los grupos MPTS guardados, cada uno con la lista de
- * canales que contiene, y botones para iniciar/detener/eliminar.
- * Igual que ListaCanales, sin logs en tiempo real -- solo gestión.
- */
-
 import { useEffect, useState } from "react";
 
 const BACKEND_URL = "http://localhost:4000";
@@ -76,7 +68,10 @@ export default function ListaMpts({ onNuevoGrupo, refrescarSenal }) {
                 <div>
                   <p className="canal-item-nombre">{grupo.nombre_grupo}</p>
                   <p className="canal-item-detalle">
-                    Salida: udp://{grupo.ip_salida_mpts}:{grupo.puerto_salida_mpts}
+                    Salida: {(grupo.tipo_salida_mpts || "UDP").toLowerCase()}://{grupo.ip_salida_mpts}:{grupo.puerto_salida_mpts}
+                  </p>
+                  <p className="mpts-tipo-salida">
+                    Tipo: {grupo.tipo_salida_mpts || "UDP"}
                   </p>
                   <p className="mpts-canales-incluidos">
                     {grupo.canales.map((c) => c.nombre_canal).join(" · ")}

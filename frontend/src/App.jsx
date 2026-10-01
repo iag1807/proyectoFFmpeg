@@ -1,11 +1,3 @@
-/**
- * App.jsx
- * -------
- * Componente principal. Aquí se conecta con el backend
- * (vía fetch para las acciones y Socket.io para los logs en vivo)
- * y se arman los componentes hijos.
- */
-
 import { useState, useEffect, useRef } from "react";
 import { io } from "socket.io-client";
 import FormStream from "./components/FormStream";
@@ -30,14 +22,12 @@ export default function App() {
   const [infoVideo, setInfoVideo] = useState(null);
   const [infoAudio, setInfoAudio] = useState(null);
   const [eventosPerdida, setEventosPerdida] = useState(null);
-  const idActualRef = useRef(null); // guarda el id del stream que está corriendo
+  const idActualRef = useRef(null); 
 
-  // Nos conectamos a Socket.io una sola vez, cuando carga la página
   useEffect(() => {
     const socket = io(BACKEND_URL);
 
     socket.on("log", (data) => {
-      // Solo mostramos logs del stream que nosotros iniciamos
       if (data.id === idActualRef.current) {
         setLogs((prev) => [...prev, data.mensaje]);
       }
@@ -49,14 +39,12 @@ export default function App() {
       }
     });
 
-    // Estadísticas en vivo (frame, fps, bitrate, speed...)
     socket.on("stats", (data) => {
       if (data.id === idActualRef.current) {
         setStats(data.stats);
       }
     });
 
-    // Info detectada del stream (codec y resolución de video, o codec/canales de audio)
     socket.on("infoStream", (data) => {
       if (data.id === idActualRef.current) {
         if (data.infoStream.tipo === "video") setInfoVideo(data.infoStream);
@@ -64,7 +52,6 @@ export default function App() {
       }
     });
 
-    // Eventos de pérdida detectados por FFmpeg (contador acumulado)
     socket.on("perdida", (data) => {
       if (data.id === idActualRef.current) {
         setEventosPerdida({ total: data.total, ultimoEvento: data.ultimoEvento });
@@ -76,7 +63,7 @@ export default function App() {
 
   async function manejarIniciar(datos) {
     idActualRef.current = datos.id;
-    setLogs([]); // limpiamos logs anteriores
+    setLogs([]); 
     setStats(null);
     setInfoVideo(null);
     setInfoAudio(null);
@@ -110,7 +97,6 @@ export default function App() {
     setStats(null);
   }
 
-  // Inicia un canal que YA estaba guardado en la base de datos (desde la lista)
   function manejarIniciarGuardado(canal) {
     manejarIniciar({
       id: String(canal.id),

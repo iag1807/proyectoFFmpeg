@@ -1,34 +1,16 @@
-/**
- * routes/stream.js
- * ----------------
- * Define los endpoints que el frontend va a usar:
- *   POST /api/stream/iniciar   -> empieza una transmisión
- *   POST /api/stream/detener   -> detiene una transmisión
- *   GET  /api/stream/activos   -> lista los streams corriendo
- */
-
 const express = require("express");
 const router = express.Router();
 const ffmpegService = require("../services/ffmpeg");
 const { parsearLineaProgreso, parsearInfoStream, detectarEventoPerdida } = require("../services/parserEstadisticas");
 
-// Contador acumulado de eventos de pérdida por canal (id -> número)
-// Vive en memoria mientras el canal está activo.
 const contadoresPerdida = {};
 
-// "io" se inyecta desde server.js para poder mandar logs en tiempo real
 module.exports = function (io) {
   // Iniciar una transmisión
   router.post("/iniciar", (req, res) => {
-    // req.body trae TODOS los campos del formulario avanzado:
-    // id, nombreCanal, protocolo, urlEntrada, modoSrt, latencia, ttlUdp,
-    // encriptacion, tipoAes, fraseSecreta, tipoSalida, ipMulticast,
-    // puertoSalida, codecVideo, bitrateVideo, resolucion, fps,
-    // codecAudio, bitrateAudio, seleccionarAudio
     const datos = req.body;
     const { id, protocolo, urlEntrada, ipMulticast, puertoSalida, tipoSalida } = datos;
 
-    // Solo validamos los campos minimos indispensables
     if (!id || !protocolo || !urlEntrada || !ipMulticast || (tipoSalida !== "HLS" && !puertoSalida)) {
       return res.status(400).json({ error: "Faltan datos requeridos" });
     }

@@ -1,14 +1,3 @@
-/**
- * components/ListaCanales.jsx
- * ------------------------------
- * Muestra todos los canales SPTS guardados en la base de datos.
- * Cada fila tiene botones para Iniciar (usa el motor de ffmpeg que
- * ya existe), Editar (carga sus datos en el formulario) y Eliminar.
- *
- * Esta pantalla NO muestra logs en tiempo real, tal como se pidió --
- * es solo gestión de la configuración guardada.
- */
-
 import { useEffect, useState } from "react";
 
 const BACKEND_URL = "http://localhost:4000";

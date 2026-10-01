@@ -1,11 +1,3 @@
-/**
- * routes/mpts.js
- * ----------------
- * CRUD de grupos MPTS (qué canales guardados se agrupan y a dónde
- * sale el flujo combinado), más los endpoints para iniciar y
- * detener el proceso de FFmpeg que realmente combina los canales.
- */
-
 const express = require("express");
 const router = express.Router();
 const { pool } = require("../database/db");
@@ -31,8 +23,6 @@ module.exports = function (io) {
       );
       const grupo = grupoResultado.rows[0];
 
-      // Guardamos la relación de cada canal con este grupo, en el orden
-      // en que fueron seleccionados (eso define el numero_programa)
       for (let i = 0; i < canalesIds.length; i++) {
         await cliente.query(
           `INSERT INTO mpts_canales (grupo_mpts_id, canal_spts_id, numero_programa)
@@ -80,10 +70,6 @@ module.exports = function (io) {
   // Eliminar un grupo MPTS (borra tambien sus relaciones por el ON DELETE CASCADE)
   router.delete("/:id", async (req, res) => {
     try {
-      // Muy importante: si el grupo esta transmitiendo, detenemos el
-      // proceso de ffmpeg PRIMERO. Si no, el proceso queda "huerfano"
-      // corriendo en el sistema, ocupando los puertos/canales para
-      // siempre, aunque el grupo ya no exista en la base de datos.
       ffmpegService.detenerMpts(req.params.id);
 
       const resultado = await pool.query(

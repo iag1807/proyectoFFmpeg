@@ -1,32 +1,14 @@
-/**
- * database/db.js
- * ---------------
- * Conexión a PostgreSQL y creación automática de las tablas
- * que necesita el proyecto (canales SPTS, grupos MPTS, y la
- * relación entre ambos).
- *
- * Por ahora se conecta a un PostgreSQL LOCAL (en tu propio
- * computador). Cuando la empresa te de un servidor real, solo
- * hay que cambiar estos valores de conexión (host, usuario,
- * contraseña) por los que te den ellos.
- */
-
 const { Pool } = require("pg");
 
 const pool = new Pool({
   host: "localhost",
   port: 5432,
   user: "postgres",
-  password: "1234", // <-- reemplaza con la contraseña que creaste al instalar
+  password: "1234",
   database: "stream_manager",
 });
 
-/**
- * Crea las tablas si no existen todavía. Se llama una sola vez
- * cuando arranca el servidor (ver server.js).
- */
 async function inicializarBaseDeDatos() {
-  // Tabla de canales individuales (SPTS)
   await pool.query(`
     CREATE TABLE IF NOT EXISTS canales_spts (
       id SERIAL PRIMARY KEY,
@@ -53,7 +35,6 @@ async function inicializarBaseDeDatos() {
     );
   `);
 
-  // Tabla de grupos MPTS (varios canales empaquetados en una sola salida)
   await pool.query(`
     CREATE TABLE IF NOT EXISTS grupos_mpts (
       id SERIAL PRIMARY KEY,
@@ -65,14 +46,11 @@ async function inicializarBaseDeDatos() {
     );
   `);
 
-  // Migracion: si la tabla ya existia de antes (sin esta columna),
-  // la agregamos ahora. IF NOT EXISTS evita error si ya se aplico.
   await pool.query(`
     ALTER TABLE grupos_mpts
     ADD COLUMN IF NOT EXISTS tipo_salida_mpts TEXT NOT NULL DEFAULT 'UDP';
   `);
 
-  // Tabla intermedia: qué canales pertenecen a qué grupo MPTS
   await pool.query(`
     CREATE TABLE IF NOT EXISTS mpts_canales (
       id SERIAL PRIMARY KEY,

@@ -1,19 +1,7 @@
-/**
- * services/ffmpeg.js
- * -------------------
- * Arma y ejecuta los comandos FFmpeg según TODOS los parámetros
- * que el usuario configura en el formulario: entrada, salida,
- * codecs, resolución, audio, encriptación SRT, etc.
- */
-
 const { spawn } = require("child_process");
 
 const procesosActivos = {};
 
-/**
- * Arma el string de entrada (-i) agregando los parámetros
- * específicos de cada protocolo como query params en la URL.
- */
 function construirEntrada(datos) {
   const { protocolo, urlEntrada, modoSrt, latencia, ttlUdp, encriptacion, tipoAes, fraseSecreta } = datos;
 
@@ -22,17 +10,12 @@ function construirEntrada(datos) {
     throw new Error("Protocolo no soportado: " + protocolo);
   }
 
-  // FILE, HTTP, RTMP y RTSP no llevan parámetros extra, se usan tal cual
   if (protocolo === "FILE" || protocolo === "HTTP" || protocolo === "RTMP" || protocolo === "RTSP") {
     return urlEntrada;
   }
 
-  // Para SRT armamos los query params: modo, latencia, encriptación
   if (protocolo === "SRT") {
     const params = [];
-    // Si no se especifico latencia, o es muy baja, usamos un minimo seguro
-    // de 2000ms para darle a SRT margen suficiente para recuperar paquetes
-    // perdidos antes de descartarlos (reduce las perdidas reportadas por VLC).
     const latenciaSegura = latencia && Number(latencia) >= 2000 ? latencia : 2000;
     if (modoSrt) params.push(`mode=${modoSrt}`);
     params.push(`latency=${latenciaSegura}`);
@@ -44,7 +27,6 @@ function construirEntrada(datos) {
     return `${urlEntrada}${queryString}`;
   }
 
-  // Para UDP armamos el TTL si se especificó
   if (protocolo === "UDP") {
     const params = [];
     if (ttlUdp) params.push(`ttl=${ttlUdp}`);
@@ -55,14 +37,9 @@ function construirEntrada(datos) {
   return urlEntrada;
 }
 
-/**
- * Arma los parámetros de video: codec, bitrate, resolución, fps.
- * Si no se especifica codec, usamos "copy" (más rápido, sin recodificar).
- */
 function construirParametrosVideo(datos) {
   const { codecVideo, bitrateVideo, resolucion, fps } = datos;
 
-  // Sin codec elegido -> copiamos el video tal cual llega (más eficiente)
   if (!codecVideo || codecVideo === "copy") {
     return ["-c:v", "copy"];
   }
@@ -75,9 +52,6 @@ function construirParametrosVideo(datos) {
   return args;
 }
 
-/**
- * Arma los parámetros de audio: codec, bitrate, pista seleccionada.
- */
 function construirParametrosAudio(datos) {
   const { codecAudio, bitrateAudio, seleccionarAudio } = datos;
 
@@ -90,9 +64,6 @@ function construirParametrosAudio(datos) {
     if (bitrateAudio) args.push("-b:a", `${bitrateAudio}k`);
   }
 
-  // Si el usuario eligió una pista de audio específica (ej: "0" para la primera).
-  // Nos protegemos de valores vacíos, undefined, null o el texto "null"
-  // (esto último puede pasar si el dato viene de la base de datos con un campo vacío).
   const audioValido =
     seleccionarAudio !== undefined &&
     seleccionarAudio !== null &&
@@ -107,9 +78,6 @@ function construirParametrosAudio(datos) {
   return args;
 }
 
-/**
- * Arma la salida (-f + destino) según el tipo de salida elegido.
- */
 function construirSalida(datos) {
   const { tipoSalida, ipMulticast, puertoSalida, ttlUdp } = datos;
 
@@ -122,9 +90,6 @@ function construirSalida(datos) {
     return { formato: "hls", destino: `${ipMulticast}` };
   }
 
-  // UDP / Multicast (el caso más común en la empresa)
-  // buffer_size más grande = menos probabilidad de perder paquetes
-  // cuando el sistema esta bajo carga (varios procesos corriendo a la vez)
   const params = ["pkt_size=1316", "buffer_size=655360"];
   if (ttlUdp) params.push(`ttl=${ttlUdp}`);
   return {
@@ -133,10 +98,6 @@ function construirSalida(datos) {
   };
 }
 
-/**
- * Inicia una transmisión completa armando el comando con TODOS los
- * parámetros configurados por el usuario en el formulario avanzado.
- */
 function iniciarStream(datos, onLog, onClose) {
   const { id } = datos;
 
@@ -190,37 +151,9 @@ function listarStreamsActivos() {
   return Object.keys(procesosActivos);
 }
 
-/**
- * ------------------------------------------------------------------
- * MPTS — Multiple Program Transport Stream
- * ------------------------------------------------------------------
- * A diferencia de un SPTS (un canal = un flujo), aquí tomamos VARIOS
- * canales guardados y los combinamos en un solo comando de FFmpeg,
- * con una entrada (-i) por cada canal y un "-map" que le dice a
- * FFmpeg "agrega este video/audio como un programa más" dentro del
- * mismo flujo de salida.
- *
- * Ejemplo con 3 canales, el comando final se parece a esto:
- *
- *   ffmpeg -i srt://canal1 -i udp://canal2 -i rtmp://canal3
- *          -map 0:v -map 0:a
- *          -map 1:v -map 1:a
- *          -map 2:v -map 2:a
- *          -c copy -f mpegts udp://227.1.1.6:5006
- */
-
 const procesosMptsActivos = {};
 
-/**
- * Arma el bloque de entrada (-i ...) para UN canal dentro del MPTS,
- * reutilizando la misma lógica de construirEntrada() que ya usamos
- * para SPTS individuales (así los canales SRT dentro del MPTS
- * también respetan latencia, modo caller/listener, encriptación, etc.)
- */
 function construirEntradaParaMpts(canal) {
-  // Reutilizamos construirEntrada() adaptando los nombres de campo,
-  // porque los canales guardados en la base de datos usan snake_case
-  // (protocolo, url_entrada, modo_srt...) en vez de camelCase.
   return construirEntrada({
     protocolo: canal.protocolo,
     urlEntrada: canal.url_entrada,
@@ -253,34 +186,17 @@ function iniciarMpts(datos, onLog, onClose) {
 
   const args = [];
 
-  // Un -i por cada canal del grupo
+  
   canales.forEach((canal) => {
     args.push("-i", construirEntradaParaMpts(canal));
   });
 
-  // Un -map por cada canal, indicando "toma el video y audio
-  // de la entrada N y agregalo como un programa mas"
   canales.forEach((_, indice) => {
     args.push("-map", `${indice}:v`, "-map", `${indice}:a`);
   });
 
-  // Copiamos todo tal cual llega (sin recodificar), igual que en SPTS
-  // por defecto -- es lo mas liviano para el servidor.
   args.push("-c", "copy");
 
-  // ------------------------------------------------------------------
-  // Definimos explicitamente los "programas" del MPTS, uno por canal,
-  // en vez de dejar que ffmpeg los agrupe todos como un solo Program.
-  // Cada canal aporta 2 streams de SALIDA seguidos (video y audio),
-  // asi que el canal en la posicion "indice" ocupa los streams de
-  // salida (indice*2) y (indice*2 + 1).
-  //
-  // -program title="Nombre":program_num=N:st=X:st=Y
-  //
-  // Esto hace que, por ejemplo en VLC, el usuario pueda elegir entre
-  // "Programa 1", "Programa 2"... cada uno siendo un canal distinto,
-  // igual que en un decodificador de TV real.
-  // ------------------------------------------------------------------
   canales.forEach((canal, indice) => {
     const streamVideo = indice * 2;
     const streamAudio = indice * 2 + 1;
@@ -293,12 +209,6 @@ function iniciarMpts(datos, onLog, onClose) {
     );
   });
 
-  // Salida combinada: un solo flujo mpegts con todos los programas adentro.
-  // Reutilizamos construirSalida() para que el MPTS soporte los mismos
-  // tipos de salida que un canal SPTS individual (UDP o SRT). Esto es
-  // importante porque en algunas redes con firewall, UDP plano se
-  // bloquea pero SRT si pasa (SRT hace un "handshake" inicial que
-  // muchos firewalls reconocen como conexion legitima).
   const { formato, destino } = construirSalida({
     tipoSalida: datos.tipoSalida || "UDP",
     ipMulticast: ipSalida,

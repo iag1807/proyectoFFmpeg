@@ -1,12 +1,3 @@
-/**
- * components/FormStream.jsx
- * --------------------------
- * Formulario completo con Entrada y Salida, similar al software
- * de la empresa: incluye parámetros avanzados de SRT, UDP,
- * video y audio, mostrando solo los campos relevantes según
- * el protocolo elegido.
- */
-
 import { useState, useEffect } from "react";
 
 const PROTOCOLOS_ENTRADA = ["UDP", "SRT", "FILE", "RTMP", "RTSP", "HTTP"];
@@ -20,7 +11,7 @@ export default function FormStream({ onIniciar, onDetener, transmitiendo, canalE
 
   // ---- Solo para SRT ----
   const [modoSrt, setModoSrt] = useState("caller");
-  const [latencia, setLatencia] = useState("1500");
+  const [latencia, setLatencia] = useState("2000");
   const [encriptacion, setEncriptacion] = useState(false);
   const [tipoAes, setTipoAes] = useState("32");
   const [fraseSecreta, setFraseSecreta] = useState("");
@@ -33,7 +24,6 @@ export default function FormStream({ onIniciar, onDetener, transmitiendo, canalE
   const [ipMulticast, setIpMulticast] = useState("");
   const [puertoSalida, setPuertoSalida] = useState("");
 
-  // ---- Salida avanzada (opcional, puede dejarse vacío = copiar tal cual) ----
   const [codecVideo, setCodecVideo] = useState("copy");
   const [bitrateVideo, setBitrateVideo] = useState("");
   const [resolucion, setResolucion] = useState("");
@@ -42,9 +32,6 @@ export default function FormStream({ onIniciar, onDetener, transmitiendo, canalE
   const [bitrateAudio, setBitrateAudio] = useState("");
   const [seleccionarAudio, setSeleccionarAudio] = useState("");
 
-  // ---- Vista previa: FUNCIONALIDAD ELIMINADA (generaba retraso, no servía para monitoreo en vivo) ----
-
-  // Si nos pasan un canal para editar, precargamos sus datos en el formulario
   useEffect(() => {
     if (!canalEditando) return;
     setNombreCanal(canalEditando.nombre_canal || "");
@@ -68,7 +55,6 @@ export default function FormStream({ onIniciar, onDetener, transmitiendo, canalE
     setSeleccionarAudio(canalEditando.seleccionar_audio || "");
   }, [canalEditando]);
 
-  // Guarda (crea o actualiza) el canal en la base de datos, sin iniciar ffmpeg
   async function manejarGuardar() {
     const datos = {
       nombreCanal, protocolo, urlEntrada, modoSrt, latencia, ttlUdp,
